@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"time"
 	"unicode"
@@ -27,6 +28,8 @@ func main() {
 	guessedLetters := initializeGuessedWord(randomWord)
 	printGameState(randomWord, guessedLetters)
 	// userInput(guessedLetters)
+
+	fmt.Println(renderHangman(5))
 }
 
 func initializeGuessedWord(randomWord string) map[rune]bool {
@@ -47,16 +50,34 @@ func getRandomWord() string {
 func printGameState(targetWord string, guessedWord map[rune]bool) {
 
 	//football
+	fmt.Println(getWordGuessingProgress(targetWord, guessedWord))
+}
+
+func getWordGuessingProgress(targetWord string, guessedWord map[rune]bool) string {
+
+	var result = ""
 	for _, ch := range targetWord {
 		if ch == ' ' {
-			fmt.Printf(" ")
+			result += " "
 		} else if guessedWord[unicode.ToLower(ch)] == true {
-			fmt.Printf("%c", ch)
+			result += fmt.Sprintf("%c", ch)
 		} else {
-			fmt.Printf("_")
+			result += "_"
 		}
-		print(" ")
+		result += " "
 	}
+
+	return result
+}
+
+func renderHangman(hangman int) string {
+	data, err := ioutil.ReadFile("states/hangman6")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(data)
 }
 
 // func userInput(guessed map[rune]bool) {
