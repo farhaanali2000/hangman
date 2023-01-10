@@ -1,12 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"os"
+	"strings"
 	"time"
 	"unicode"
 )
+
+var inputReader = bufio.NewReader(os.Stdin)
 
 var dictionary = []string{
 	"pokemon",
@@ -26,10 +31,35 @@ func main() {
 	randomWord := getRandomWord()
 
 	guessedLetters := initializeGuessedWord(randomWord)
-	printGameState(randomWord, guessedLetters)
+	hangmanState := 0
+
+	for !isWordGuessed(randomWord, guessedLetters) && !isHangManComplete(hangmanState) {
+		printGameState(randomWord, guessedLetters, hangmanState)
+		input := readInput()
+
+		if len(input) != 1 {
+			fmt.Println("invalid input. please use letters only...")
+			continue
+		}
+
+		letter := rune(input[0])
+		if isCorrectGuess(randomWord, letter) {
+			guessedLetters[letter] = true
+		} else {
+			hangmanState++
+		}
+	}
+	fmt.Println("Game Over!")
+	if isWordGuessed(randomWord, guessedLetters) {
+		fmt.Println("You win!")
+	} else if isHangManComplete(hangmanState) {
+		fmt.Println("You lose!")
+	} else {
+		panic("invalid state. Game is over there is no winner")
+	}
+
 	// userInput(guessedLetters)
 
-	fmt.Println(renderHangman(5))
 }
 
 func initializeGuessedWord(randomWord string) map[rune]bool {
@@ -39,7 +69,19 @@ func initializeGuessedWord(randomWord string) map[rune]bool {
 	guessedLetters[unicode.ToLower(rune(randomWord[len(randomWord)-1]))] = true
 
 	return guessedLetters
+}
 
+func isWordGuessed(targetWord string, guessedLetters map[rune]bool) bool {
+	for _, ch := range targetWord {
+		if !guessedLetters[unicode.ToLower(ch)] {
+			return false
+		}
+	}
+	return true
+}
+
+func isHangManComplete(hangmanState int) bool {
+	return hangmanState >= 9
 }
 
 func getRandomWord() string {
@@ -47,10 +89,11 @@ func getRandomWord() string {
 	return targetWord
 }
 
-func printGameState(targetWord string, guessedWord map[rune]bool) {
+func printGameState(targetWord string, guessedWord map[rune]bool, hangmanState int) {
 
 	//football
 	fmt.Println(getWordGuessingProgress(targetWord, guessedWord))
+	fmt.Println(renderHangman(hangmanState))
 }
 
 func getWordGuessingProgress(targetWord string, guessedWord map[rune]bool) string {
@@ -70,14 +113,30 @@ func getWordGuessingProgress(targetWord string, guessedWord map[rune]bool) strin
 	return result
 }
 
-func renderHangman(hangman int) string {
-	data, err := ioutil.ReadFile("states/hangman6")
+func renderHangman(hangmanState int) string {
+	data, err := ioutil.ReadFile(fmt.Sprintf("states/hangman%d", hangmanState))
 
 	if err != nil {
 		panic(err.Error())
 	}
 
 	return string(data)
+}
+
+func readInput() string {
+	fmt.Printf(">")
+	r := inputReader
+	input, err := r.ReadString('\n')
+
+	if err != nil {
+		panic(err)
+	}
+
+	return strings.TrimSpace(input)
+}
+
+func isCorrectGuess(targetWord string, letter rune) bool {
+	return strings.ContainsRune(targetWord, letter)
 }
 
 // func userInput(guessed map[rune]bool) {
